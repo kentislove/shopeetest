@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>蝦皮進銷存 DEMO</title>
+  <style>
+    body { font-family: 'Segoe UI', 'Arial', sans-serif; margin:0; background:#f4f6fb;}
+    .sidebar { position:fixed; top:0; left:0; width:180px; height:100%; background:#263252; color:#fff; padding:32px 0 0 0; box-shadow:2px 0 12px #0002;}
+    .sidebar h2 { font-size:21px; margin:0 0 24px 24px; letter-spacing:2px;}
+    .sidebar ul { list-style:none; padding:0; margin:0;}
+    .sidebar li { padding:14px 24px; cursor:pointer; }
+    .sidebar li.active, .sidebar li:hover { background:#405185;}
+    .main { margin-left:180px; padding:42px 36px;}
+    .card { background:#fff; border-radius:12px; padding:30px 28px; box-shadow:0 6px 32px #0001; margin-bottom:32px;}
+    h2 { margin:0 0 18px 0; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { border:1px solid #e0e0e0; padding:10px 9px; text-align:left;}
+    th { background:#f7f7fa; }
+    tr.expand { background:#f5f9ff;}
+    .expand-row td { border-top:0;}
+    .btn-expand { background:none; border:none; color:#1685ec; cursor:pointer; font-weight:bold;}
+    .logout { position:fixed; bottom:32px; left:35px; color:#fff; cursor:pointer; }
+    .note { font-size:12px; color:#bbb; margin: 16px 0 0 0;}
+    .login-container { max-width: 360px; margin: 80px auto; background: #fff; padding: 36px 30px; border-radius: 10px; box-shadow: 0 4px 20px #0001;}
+    input { width:100%; padding:9px; margin:12px 0; border:1px solid #ccc; border-radius:6px;}
+    button { width:100%; padding:10px; background:#263252; color:#fff; border:none; border-radius:6px; font-weight:bold;}
+  </style>
+</head>
+<body>
+  <!-- 側邊選單 -->
+  <div class="sidebar" id="sidebar" style="display:none;">
+    <h2>進銷存 DEMO</h2>
+    <ul>
+      <li class="active">訂單管理</li>
+      <li>商品管理</li>
+      <li>庫存查詢</li>
+    </ul>
+    <div class="logout" onclick="logout()">登出</div>
+  </div>
+  <!-- 登入頁面 -->
+  <div class="login-container" id="loginDiv">
+    <h2>登入 DEMO</h2>
+    <input type="text" id="user" placeholder="帳號" autocomplete="username">
+    <input type="password" id="pwd" placeholder="密碼" autocomplete="current-password">
+    <button onclick="login()">登入</button>
+    <div class="note">帳號：demo<br>密碼：demo1234<br><br>
+      本頁僅供蝦皮開放平台開發者審核用途，無串接實際API。
+    </div>
+  </div>
+  <!-- 主頁 -->
+  <div class="main" id="mainDiv" style="display:none;">
+    <div class="card">
+      <h2>訂單管理</h2>
+      <div class="note">DEMO頁面僅供審核參考，資料皆為假資料，格式依據蝦皮訂單API。</div>
+      <table id="orderTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>訂單編號</th>
+            <th>賣場名稱</th>
+            <th>買家帳號</th>
+            <th>訂單狀態</th>
+            <th>成立時間</th>
+            <th>總金額</th>
+            <th>收件人</th>
+            <th>物流方式</th>
+            <th>物流編號</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 由JS填入 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+  // 假訂單資料
+  const orders = [
+    {
+      order_sn: "230513SKDC4BKT",
+      shop_name: "潮流小舖",
+      buyer_username: "catlover88",
+      order_status: "待出貨",
+      create_time: "2024-05-13 12:36",
+      total_amount: 1120,
+      recipient_name: "王小明",
+      shipping_carrier: "蝦皮店到店",
+      tracking_number: "SPX3456987",
+      items: [
+        { item_name: "韓系大學T", item_id: "789654", quantity_purchased: 2, item_price: 350 },
+        { item_name: "日系帆布包", item_id: "123789", quantity_purchased: 1, item_price: 420 }
+      ]
+    },
+    {
+      order_sn: "230512AKJSD9BK",
+      shop_name: "生活百貨館",
+      buyer_username: "summerwind",
+      order_status: "已完成",
+      create_time: "2024-05-12 09:20",
+      total_amount: 780,
+      recipient_name: "林育婷",
+      shipping_carrier: "黑貓宅急便",
+      tracking_number: "TAQ1234568",
+      items: [
+        { item_name: "304不鏽鋼保溫杯", item_id: "951357", quantity_purchased: 1, item_price: 320 },
+        { item_name: "折疊衣架組", item_id: "753951", quantity_purchased: 2, item_price: 230 }
+      ]
+    },
+    {
+      order_sn: "230511JKDQBKF8",
+      shop_name: "3C配件館",
+      buyer_username: "xiaozhu",
+      order_status: "待付款",
+      create_time: "2024-05-11 18:01",
+      total_amount: 399,
+      recipient_name: "何姿瑩",
+      shipping_carrier: "宅配通",
+      tracking_number: "HCT9998823",
+      items: [
+        { item_name: "Type-C快充線", item_id: "145236", quantity_purchased: 3, item_price: 133 }
+      ]
+    }
+  ];
+
+  function login() {
+    const user = document.getElementById('user').value.trim();
+    const pwd = document.getElementById('pwd').value;
+    if (user === 'demo' && pwd === 'demo1234') {
+      document.getElementById('loginDiv').style.display = 'none';
+      document.getElementById('sidebar').style.display = '';
+      document.getElementById('mainDiv').style.display = '';
+      renderOrders();
+    } else {
+      alert('帳號或密碼錯誤');
+    }
+  }
+  function logout() {
+    document.getElementById('loginDiv').style.display = '';
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('mainDiv').style.display = 'none';
+  }
+  function renderOrders() {
+    const tbody = document.querySelector('#orderTable tbody');
+    tbody.innerHTML = '';
+    orders.forEach((order, idx) => {
+      // 主資料列
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><button class="btn-expand" onclick="toggleExpand(${idx})" id="expandBtn${idx}">＋</button></td>
+        <td>${order.order_sn}</td>
+        <td>${order.shop_name}</td>
+        <td>${order.buyer_username}</td>
+        <td>${order.order_status}</td>
+        <td>${order.create_time}</td>
+        <td>$${order.total_amount}</td>
+        <td>${order.recipient_name}</td>
+        <td>${order.shipping_carrier}</td>
+        <td>${order.tracking_number}</td>
+      `;
+      tbody.appendChild(tr);
+      // 明細列（初始隱藏）
+      const trDetail = document.createElement('tr');
+      trDetail.id = 'expandRow' + idx;
+      trDetail.className = 'expand-row';
+      trDetail.style.display = 'none';
+      let detailHtml = `<td colspan="10">
+        <b>訂單商品明細：</b>
+        <table style="margin-top:10px;">
+          <tr>
+            <th>商品名稱</th><th>商品ID</th><th>購買數量</th><th>單價</th>
+          </tr>`;
+      order.items.forEach(item => {
+        detailHtml += `<tr>
+            <td>${item.item_name}</td>
+            <td>${item.item_id}</td>
+            <td>${item.quantity_purchased}</td>
+            <td>$${item.item_price}</td>
+          </tr>`;
+      });
+      detailHtml += `</table></td>`;
+      trDetail.innerHTML = detailHtml;
+      tbody.appendChild(trDetail);
+    });
+  }
+  window.toggleExpand = function(idx) {
+    const row = document.getElementById('expandRow' + idx);
+    const btn = document.getElementById('expandBtn' + idx);
+    if (row.style.display === 'none') {
+      row.style.display = '';
+      btn.innerText = '－';
+    } else {
+      row.style.display = 'none';
+      btn.innerText = '＋';
+    }
+  }
+  </script>
+</body>
+</html>
